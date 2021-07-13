@@ -1,5 +1,7 @@
 import requests
 from pprint import pprint
+from tqdm import tqdm
+from time import sleep
 
 with open('text.txt', 'r') as f:
     token_vk = f.read().strip()
@@ -7,7 +9,7 @@ with open('text.txt', 'r') as f:
 with open('text2.txt', 'r') as file:
     token_ya = file.read().strip()
 
-user_id = 123058903
+user_id = 20846303
 # token ввод
 
 
@@ -17,12 +19,24 @@ def get_photos():
         'owner_id': user_id,
         'album_id': 'profile',
         'extended': '1',
-        'count': 11,
+        'count': 10,
         'access_token': token_vk,
         'v': '5.131'
     }
     res = requests.get(url, params=params, timeout=5)
     return res.json()
+
+
+def personal_info():
+    url = 'https://api.vk.com/method/users.get'
+    params = {
+        'user_ids': user_id,
+        'access_token': token_vk,
+        'v': '5.131'
+    }
+    res = requests.get(url, params=params, timeout=5)
+    info = res.json()['response'][0]['first_name'] + ' ' + res.json()['response'][0]['last_name']
+    return info
 
 
 def get_info():
@@ -53,7 +67,7 @@ def get_files_list():
 
 
 def new_folder():
-    folder_name = 'VK'
+    folder_name = personal_info()
     upload_url = 'https://cloud-api.yandex.net/v1/disk/resources'
     headers = get_headers()
     params = {'path': folder_name}
@@ -64,16 +78,17 @@ def new_folder():
 def upload_photo_by_url():
     folder = new_folder()
     userpic_data = get_info()
-    for name in userpic_data:
-        file_path = str(folder) + '/' + str(name) + '.jpeg'
-        upload_url = 'https://cloud-api.yandex.net/v1/disk/resources/upload'
-        url = userpic_data[name]
-        headers = get_headers()
-        params = {'path': file_path, 'url': url, 'overwrite': 'true'}
-        response = requests.post(upload_url, headers=headers, params=params)
-        response.raise_for_status()
-        if response.status_code == 202:
-            print('Success')
+    with tqdm(total=100, colour='green') as bar:
+        for name in userpic_data:
+            file_path = str(folder) + '/' + str(name) + '.jpeg'
+            upload_url = 'https://cloud-api.yandex.net/v1/disk/resources/upload'
+            url = userpic_data[name]
+            headers = get_headers()
+            params = {'path': file_path, 'url': url, 'overwrite': 'true'}
+            requests.post(upload_url, headers=headers, params=params)
+            sleep(0.1)
+            bar.update(10)
+        bar.close()
 
 
 upload_photo_by_url()
