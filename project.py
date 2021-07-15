@@ -7,8 +7,8 @@ from time import sleep
 with open('text.txt', 'r') as f:
     token_vk = f.read().strip()
 
-user_id = int(input('Ведите id пользователя: '))
-token_ya = int(input('Ведите id пользователя: '))
+user_id = int(input('Ведите ID пользователя VK: '))
+token_ya = int(input('Ведите токен пользователя Яндекс.Диск: '))
 
 
 def get_photos():
