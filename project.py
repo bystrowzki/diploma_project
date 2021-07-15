@@ -1,4 +1,5 @@
 import requests
+import json
 from pprint import pprint
 from tqdm import tqdm
 from time import sleep
@@ -6,11 +7,8 @@ from time import sleep
 with open('text.txt', 'r') as f:
     token_vk = f.read().strip()
 
-with open('text2.txt', 'r') as file:
-    token_ya = file.read().strip()
-
-user_id = 20846303
-# token ввод
+user_id = int(input('Ведите id пользователя: '))
+token_ya = int(input('Ведите id пользователя: '))
 
 
 def get_photos():
@@ -40,8 +38,10 @@ def personal_info():
 
 
 def get_info():
+    data_list = []
     photo_data = {}
     data = get_photos()
+    x = -1
     for userpic in range(len(data['response']['items'])):
         if data['response']['items'][userpic]['likes']['count'] in photo_data:
             photo_data[data['response']['items'][userpic]['date']] = \
@@ -49,6 +49,14 @@ def get_info():
         else:
             photo_data[data['response']['items'][userpic]['likes']['count']] = \
                 data['response']['items'][userpic]['sizes'][-1]['url']
+    for name in photo_data:
+        data_dict = {}
+        x += 1
+        data_dict['file_name'] = str(name)+'.jpeg'
+        data_dict['size'] = data['response']['items'][x]['sizes'][-1]['type']
+        data_list.append(data_dict)
+    with open(f'{personal_info()}.json', 'w') as w_file:
+        json.dump(data_list, w_file)
     return photo_data
 
 
@@ -78,7 +86,7 @@ def new_folder():
 def upload_photo_by_url():
     folder = new_folder()
     userpic_data = get_info()
-    with tqdm(total=100, colour='green') as bar:
+    with tqdm(total=len(userpic_data), colour='green') as bar:
         for name in userpic_data:
             file_path = str(folder) + '/' + str(name) + '.jpeg'
             upload_url = 'https://cloud-api.yandex.net/v1/disk/resources/upload'
@@ -87,8 +95,10 @@ def upload_photo_by_url():
             params = {'path': file_path, 'url': url, 'overwrite': 'true'}
             requests.post(upload_url, headers=headers, params=params)
             sleep(0.1)
-            bar.update(10)
+            bar.update(1)
         bar.close()
+    with open(f'{personal_info()}.json', 'r') as r_file:
+        pprint(json.load(r_file))
 
 
 upload_photo_by_url()
